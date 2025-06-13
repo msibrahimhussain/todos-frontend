@@ -1,13 +1,15 @@
 import React, {useEffect, useState} from 'react'
 
-const API_URL = 'http://localhost:3000/todos' // Adjust to match your backend
+const API_URL = 'http://localhost:3001/todos' // backend
 
 export default function TodosApp() {
   const [todos, setTodos] = useState([])
   const [formData, setFormData] = useState({
-    task: '',
+    id: '',
+    todo: '',
     priority: 'HIGH',
     status: 'TO DO',
+    category: 'LEARNING',
   })
   const [editId, setEditId] = useState(null)
   const [filter, setFilter] = useState('')
@@ -28,17 +30,26 @@ export default function TodosApp() {
       await fetch(`${API_URL}/${editId}`, {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({...formData, status: 'TO DO'}),
+        body: JSON.stringify({...formData, id: editId}),
       })
       setEditId(null)
     } else {
+      const maxId =
+        todos.length > 0 ? Math.max(...todos.map(todo => Number(todo.id))) : 0
+      const newTodo = {...formData, id: (maxId + 1).toString()}
       await fetch(API_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({...formData, status: 'TO DO'}),
+        body: JSON.stringify(newTodo),
       })
     }
-    setFormData({task: '', priority: 'HIGH', status: 'TO DO'})
+    setFormData({
+      id: '',
+      todo: '',
+      priority: 'HIGH',
+      status: 'TO DO',
+      category: 'LEARNING',
+    })
     fetchTodos()
   }
 
@@ -59,158 +70,162 @@ export default function TodosApp() {
   return (
     <div className="app-container">
       <h1>Todo App</h1>
-      <form onSubmit={handleSubmit} className="form">
-        <input
-          type="text"
-          placeholder="Enter task"
-          value={formData.task}
-          onChange={e => setFormData({...formData, task: e.target.value})}
-          required
-        />
-        <select
-          value={formData.priority}
-          onChange={e => setFormData({...formData, priority: e.target.value})}
-        >
-          <option value="HIGH">HIGH</option>
-          <option value="MEDIUM">MEDIUM</option>
-          <option value="LOW">LOW</option>
-        </select>
-        <button type="submit">{editId ? 'Update' : 'Add'} Task</button>
-      </form>
+      <div className="top-section">
+        <form onSubmit={handleSubmit} className="form">
+          <input
+            type="text"
+            placeholder="Enter todo"
+            value={formData.todo}
+            onChange={e => setFormData({...formData, todo: e.target.value})}
+            required
+          />
+          <select
+            value={formData.priority}
+            onChange={e => setFormData({...formData, priority: e.target.value})}
+          >
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+          <select
+            value={formData.status}
+            onChange={e => setFormData({...formData, status: e.target.value})}
+          >
+            <option value="TO DO">TO DO</option>
+            <option value="IN PROGRESS">IN PROGRESS</option>
+            <option value="DONE">DONE</option>
+          </select>
+          <select
+            value={formData.category}
+            onChange={e => setFormData({...formData, category: e.target.value})}
+          >
+            <option value="LEARNING">LEARNING</option>
+            <option value="WORK">WORK</option>
+            <option value="HOME">HOME</option>
+          </select>
+          <button type="submit">{editId ? 'Update' : 'Add'} Todo</button>
+        </form>
 
-      <div className="filter">
-        <label htmlFor="priorityFilter">Filter by Priority:</label>
-        <select
-          id="priorityFilter"
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-        >
-          <option value="">All</option>
-          <option value="HIGH">HIGH</option>
-          <option value="MEDIUM">MEDIUM</option>
-          <option value="LOW">LOW</option>
-        </select>
+        <div className="filter">
+          <label htmlFor="priorityFilter">Filter by Priority:</label>
+          <select
+            id="priorityFilter"
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+        </div>
       </div>
 
       <div className="todo-list">
         {filteredTodos.map(todo => (
           <div key={todo.id} className="todo-card">
-            <h3>{todo.task}</h3>
-            <p>Priority: {todo.priority}</p>
-            <p>Status: {todo.status}</p>
-            <div className="actions">
+            <div className="todo-header">
+              <h3>{todo.todo}</h3>
               <button onClick={() => handleEdit(todo)}>Edit</button>
-              <button onClick={() => handleDelete(todo.id)}>Delete</button>
+            </div>
+            <div className="todo-content">
+              <p>
+                <strong>Priority:</strong> {todo.priority}
+              </p>
+              <p>
+                <strong>Category:</strong> {todo.category}
+              </p>
+              <div className="todo-footer">
+                <p>
+                  <strong>Status:</strong> {todo.status}
+                </p>
+                <button onClick={() => handleDelete(todo.id)}>Delete</button>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       <style>{`
-        * {
-          box-sizing: border-box;
-        }
-        html, body, #root {
+        body, html {
           margin: 0;
           padding: 0;
-          width: 100%;
-          height: 100%;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
         }
         .app-container {
-          width: 100%;
+          padding: 2rem;
           min-height: 100vh;
-          margin: 0;
-          padding: 60px 80px;
-          font-family: Arial, sans-serif;
-          background-image: url('https://images.unsplash.com/photo-1518684079-3c830dcef090'); /* black mountain rocks */
-          background-size: cover;
-          background-repeat: no-repeat;
-          background-position: center;
-          background-attachment: fixed;
-          backdrop-filter: blur(6px);
-          color: #f0f0f0;
+          color: #fff;
         }
-        h1 {
-          text-align: center;
-        }
-        .form, .filter {
+        .top-section {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          margin-bottom: 20px;
-          background-color: rgba(0, 0, 0, 0.3);
-          padding: 20px;
+          gap: 1rem;
+        }
+        @media (min-width: 1024px) {
+          .top-section {
+            flex-direction: row;
+            justify-content: space-between;
+          }
+          .todo-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+          }
+          .todo-card {
+            flex: 1 1 calc(33% - 1rem);
+          }
+        }
+        .form, .filter, .todo-card {
+          background-color: rgba(255, 255, 255, 0.07);
+          border: 1px solid #00ffcc;
           border-radius: 10px;
+          padding: 1rem;
+          margin-bottom: 1rem;
         }
         input, select, button {
-          padding: 10px;
-          font-size: 1rem;
-          background-color: rgba(255, 255, 255, 0.2);
+          margin: 0.5rem;
+          padding: 0.5rem;
+          border: 1px solid #00ffcc;
+          background: rgba(0, 0, 0, 0.5);
           color: #fff;
-          border: 1px solid #39ff14;
-          border-radius: 6px;
-          outline: none;
-        }
-        input::placeholder {
-          color: #fff;
-;
-        }
-        select {
-          appearance: none;
-          background-color: transparent;
-          color: #fff;
-          background-image: url("data:image/svg+xml;utf8,<svg fill='chocolate' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-          background-repeat: no-repeat;
-          background-position-x: 100%;
-          background-position-y: center;
-          padding-right: 30px;
+          border-radius: 5px;
         }
         select option {
           color: black;
         }
-        .filter label {
-          color: #fff;
-        }
-        .todo-list {
-          display: grid;
-          gap: 15px;
-          background-color: rgba(0, 0, 0, 0.3);
-          padding: 20px;
-          border-radius: 10px;
-        }
         .todo-card {
-          padding: 15px;
-          border: 1px solid #fff;
-          border-radius: 10px;
-          background-color: rgba(0,0,0,0.4);
-          color: #f0f0f0;
+          box-shadow: 0 4px 12px rgba(0, 255, 204, 0.2);
+          transition: transform 0.2s ease;
         }
-        .todo-card h3 {
-          margin: 0 0 5px;
+        .todo-card:hover {
+          transform: scale(1.02);
+          background-color: rgba(0, 255, 204, 0.05);
         }
-        .actions {
+        .todo-card h3, .todo-card p {
+          margin: 0.2rem 0;
+        }
+        .todo-header {
           display: flex;
-          gap: 10px;
-          margin-top: 10px;
+          justify-content: space-between;
+          align-items: center;
         }
-        .actions button {
-          flex: 1;
-          padding: 8px;
-          background-color: rgba(0,123,255,0.1);
-          color: grey;
-          border: 1px solid #39ff14;
-          border-radius: 5px;
-          cursor: pointer;
+        .todo-content {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          gap: 0.2rem;
         }
-        .actions button:last-child {
-          background-color: rgba(220,53,69,0.1);
-        }
-        @media (max-width: 600px) {
-          .actions {
-            flex-direction: column;
-          }
+        .todo-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 0.5rem;
         }
       `}</style>
     </div>
   )
 }
+
+// RJSCPC7UBX
