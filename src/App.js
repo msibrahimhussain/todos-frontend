@@ -1,9 +1,13 @@
 import React, {useEffect, useState} from 'react'
 
+// const API_URL = 'https://todos-backend-vbqp.onrender.com', https://todos-backend-1-8jer.onrender.com
+
 const API_URL = 'http://localhost:3001/todos' // backend
 
 export default function TodosApp() {
   const [todos, setTodos] = useState([])
+  const [showTodos, setShowTodos] = useState(true)
+
   const [formData, setFormData] = useState({
     id: '',
     todo: '',
@@ -33,6 +37,7 @@ export default function TodosApp() {
         body: JSON.stringify({...formData, id: editId}),
       })
       setEditId(null)
+      setShowTodos(true) // Show todos after add or update
     } else {
       const maxId =
         todos.length > 0 ? Math.max(...todos.map(todo => Number(todo.id))) : 0
@@ -56,6 +61,7 @@ export default function TodosApp() {
   const handleEdit = todo => {
     setFormData(todo)
     setEditId(todo.id)
+    setShowTodos(false) // Hide todos when editing
   }
 
   const handleDelete = async id => {
@@ -120,31 +126,32 @@ export default function TodosApp() {
           </select>
         </div>
       </div>
-
-      <div className="todo-list">
-        {filteredTodos.map(todo => (
-          <div key={todo.id} className="todo-card">
-            <div className="todo-header">
-              <h3>{todo.todo}</h3>
-              <button onClick={() => handleEdit(todo)}>Edit</button>
-            </div>
-            <div className="todo-content">
-              <p>
-                <strong>Priority:</strong> {todo.priority}
-              </p>
-              <p>
-                <strong>Category:</strong> {todo.category}
-              </p>
-              <div className="todo-footer">
+      {showTodos && (
+        <div className="todo-list">
+          {filteredTodos.map(todo => (
+            <div key={todo.id} className="todo-card">
+              <div className="todo-header">
+                <h3>{todo.todo}</h3>
+                <button onClick={() => handleEdit(todo)}>Edit</button>
+              </div>
+              <div className="todo-content">
                 <p>
-                  <strong>Status:</strong> {todo.status}
+                  <strong>Priority:</strong> {todo.priority}
                 </p>
-                <button onClick={() => handleDelete(todo.id)}>Delete</button>
+                <p>
+                  <strong>Category:</strong> {todo.category}
+                </p>
+                <div className="todo-footer">
+                  <p>
+                    <strong>Status:</strong> {todo.status}
+                  </p>
+                  <button onClick={() => handleDelete(todo.id)}>Delete</button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <style>{`
         body, html {
